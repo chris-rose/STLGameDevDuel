@@ -42,10 +42,6 @@ namespace UnityStandardAssets._2D
                 if (colliders[i].gameObject != gameObject)
                     m_Grounded = true;
             }
-            m_Anim.SetBool("Ground", m_Grounded);
-
-            // Set the vertical animation
-            m_Anim.SetFloat("vSpeed", m_Rigidbody2D.velocity.y);
         }
 
 
@@ -60,9 +56,7 @@ namespace UnityStandardAssets._2D
                     crouch = true;
                 }
             }
-
-            // Set whether or not the character is crouching in the animator
-            m_Anim.SetBool("Crouch", crouch);
+                
 
             //only control the player if grounded or airControl is turned on
             if (m_Grounded || m_AirControl)
