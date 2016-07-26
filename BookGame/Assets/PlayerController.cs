@@ -4,33 +4,26 @@ using System.Collections;
 public class PlayerController : MonoBehaviour {
 
 	[HideInInspector] public bool facingRight = true;
-    //[HideInInspector] public bool jump = false;
     public float walkSpeed;
-    public float eatWalkSpeed;
 	public float runSpeed;
-	public float timeElapsedRun;
-	public float growthSize;
+	public float timeElapsedToRun;
 	public bool canMove = true;
 
     public enum motionStates {idle, walking, running}
-	public enum actionStates {none, eating}
-    public enum formStates {none, apple, taco}
-	public motionStates mState;
-	public actionStates aState;
-    public actionStates fState;
+	public motionStates motionState;
     private float timeMoving;
     private Animator anim;
-    private Rigidbody2D rb2d;
-    private SpriteRenderer sprd;
-    private PlayerController plyrc;
+    private Rigidbody2D rigidbod2d;
+    private SpriteRenderer spriterend;
+    private PlayerController playercontrl;
     
 
 
-    // Use this for initialization
+    // Collects object references
     void Awake () {
         anim = GetComponent<Animator>();
-        rb2d = GetComponent<Rigidbody2D>();
-        sprd = GetComponent<SpriteRenderer>();
+        rigidbod2d = GetComponent<Rigidbody2D>();
+        spriterend = GetComponent<SpriteRenderer>();
     }
 
     // Update is called once per frame
@@ -38,70 +31,42 @@ public class PlayerController : MonoBehaviour {
     	
     }
 
+    //Main update loop. Physics based game so use FixedUpdate instead
     void FixedUpdate() {
-        //anim.SetFloat("Speed", Mathf.Abs(h));
-        if (rb2d.velocity.x > 0 && !facingRight)
+        //anim.SetFloat("Speed", Mathf.Abs(h)); //Once we include an animated sprite this will alter anim playback to match speed
+        if (rigidbod2d.velocity.x > 0 && !facingRight)
             Flip ();
-        else if (rb2d.velocity.x < 0 && facingRight)
+        else if (rigidbod2d.velocity.x < 0 && facingRight)
             Flip ();
-
-        Action();
         if (canMove)
         	Move();
         else
-        	rb2d.velocity = new Vector2 (0, 0);
+            rigidbod2d.velocity = new Vector2 (0, 0);
     }
 
+    //Handles the motion of the player
     void Move() {
     	float movex = Input.GetAxis("LeftStickX");
     	float movey = Input.GetAxis("LeftStickY");
 
     	if (movex == 0 && movey == 0) {
-    		mState = motionStates.idle;
-    		rb2d.velocity = new Vector2 (0, 0);
+    		motionState = motionStates.idle;
+            rigidbod2d.velocity = new Vector2 (0, 0);
     		timeMoving = 0;
     	}
-    	else if (aState == actionStates.eating) {
-    		mState = motionStates.walking;
-    		rb2d.velocity = new Vector2 (movex * eatWalkSpeed, movey * eatWalkSpeed);
-    		timeMoving = 0;
-    	}
-    	else if (timeMoving < timeElapsedRun) {
-    		mState = motionStates.walking;
-    		rb2d.velocity = new Vector2 (movex * walkSpeed, movey * walkSpeed);
+        else if (timeMoving < timeElapsedToRun) { //If they move continuously for X seconds they start "running" and move faster
+    		motionState = motionStates.walking;
+            rigidbod2d.velocity = new Vector2 (movex * walkSpeed, movey * walkSpeed);
     		timeMoving += Time.deltaTime;
     	}
     	else {
-    		mState = motionStates.running;
-    		rb2d.velocity = new Vector2 (movex * runSpeed, movey * runSpeed);
+    		motionState = motionStates.running;
+            rigidbod2d.velocity = new Vector2 (movex * runSpeed, movey * runSpeed);
     		timeMoving += Time.deltaTime;
     	}
     }
 
-    void Action() {
-    	Vector3 theScale = transform.localScale;
-    	if((Input.GetAxis("LeftTrigger") > 0) || (Input.GetAxis("RightTrigger") > 0))
-		{
-			aState = actionStates.eating;
-			theScale.x = growthSize;
-			theScale.y = growthSize;
-			transform.localScale = theScale;
-			sprd.color = Color.red;
-			return;
-		}
-    	//if(Input.GetButtonDown("Y"))
-		//{
-			//print ("SPECIAL");
-			//spriteRenderer.color(red);
-			//return;
-		//}
-		aState = actionStates.none;
-		theScale.x = 1;
-		theScale.y = 1;
-		transform.localScale = theScale;
-		sprd.color = Color.white;
-    }
-
+    //Makes sure the sprite is facing the right way according to motion. Called in FixedUpdate
     void Flip()
     {
         facingRight = !facingRight;
@@ -110,15 +75,17 @@ public class PlayerController : MonoBehaviour {
         transform.localScale = theScale;
     }
 
+    //Will handle all collision fuctions. Might eventually become too long...
     void OnCollisionEnter2D(Collision2D coll) {
-        if(aState == actionStates.eating)
-        	if (coll.gameObject.tag == "Food")
-            	coll.gameObject.SendMessage("GetEaten", this.gameObject);
+        //When you hit stuff do stuff here
+        //check what you hit and perform corresponding thing
     }
 
+    //In case the player needs to stop for game reasons
     void SetCanMove(bool i) {
     	canMove = i;
     }
+
     //Used for Testing There's only Debug stuff here
 	void OnGUI()
 	{
